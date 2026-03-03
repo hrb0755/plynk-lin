@@ -38,3 +38,4 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 ## Dataset
 * Primarily the subset from the **1000 Genome dataset** used in PS3.
 * Additional subsets to be derived from the complete 1000 Genome dataset available on DataHub.
+* Phenotype data to be simulated as 1000 Genome dataset does not contain them.
