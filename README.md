@@ -1,5 +1,5 @@
 # plynk-lin: A Minimal, Extensible Drop-in Subset of `plink --linear` GWAS
-This is solo project for CSE 284.
+This is solo project for CSE 284. This repo is as of now still work in progress.
 
 ---
 
