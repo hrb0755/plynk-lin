@@ -34,13 +34,13 @@ Currently implemented:
 `numpy, cyvcf2` and `pytest` for testing
 
 ### Install
-With conda env `plynk`:
 ```bash
 pip install -e . --no-build-isolation
 ```
 
 
 ### Run CLI (parse-only) 
+There are some same vcf files in `tests/data` folder.
 ```bash
 python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
 ```
