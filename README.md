@@ -15,6 +15,7 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 ### Technical Focus
 1.  **Correctness:** Accurately reproduce the OLS regression for GWAS.
 2.  **Extensibility:** Implement the tool using separate modules for:
+    * Arg/config parsing
     * IO
     * Sample/variant alignment
     * QC/filters

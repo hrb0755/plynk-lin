@@ -1,0 +1,62 @@
+# Output Writing Module Design
+
+## Overview
+This module serializes association result rows into PLINK-like `.assoc.linear` output using the configured `--out` prefix, with deterministic ordering and formatting rules.
+
+## Responsibilities
+- Materialize output path from `--out` prefix.
+- Write `.assoc.linear` header and rows in defined column order.
+- Apply consistent numeric/text formatting, including NA conventions.
+- Enforce deterministic row ordering from upstream stream order.
+- Surface write-time errors with actionable diagnostics.
+
+Not owned by this module:
+- Statistical computation.
+- Variant filtering logic.
+- Upstream parsing/alignment validation.
+
+## Inputs
+- `AssocResultStream` from association module.
+- `RunConfig.out_prefix`.
+- Optional run metadata for header comments if adopted (not required by current proposal).
+
+## Outputs
+- File artifact: `<out_prefix>.assoc.linear`.
+- Write summary metadata:
+  - output path
+  - row count
+  - success/failure status
+
+## Interface Contract
+- `write_assoc_linear(results: AssocResultStream, out_prefix: str) -> WriteSummary`
+- Output schema policy:
+  - Include required PLINK-like columns in fixed order.
+  - Preserve upstream fields for `BETA`, `SE`, `T_STAT`, `P`, `NMISS`, `DF`.
+  - Use tab-delimited text with one header row.
+- Formatting policy:
+  - Numeric formatting is consistent run-wide.
+  - Missing/unavailable values use a single NA token policy.
+  - Line termination and encoding are deterministic.
+
+## Edge Cases
+- Empty result stream should still write a valid header-only output.
+- Existing output file path collision policy (overwrite or fail) must be explicit and deterministic.
+- Rows containing NA statistics after fit failures.
+- Output prefix containing nested/nonexistent directories.
+
+## Failure Modes
+- Directory creation or file-open failure.
+- Mid-write I/O interruption.
+- Schema mismatch between expected columns and provided rows.
+- On failure, module returns/raises with output path context and row-progress context when available.
+
+## Module Dependencies
+- Upstream: Association testing result stream and run config.
+- Downstream: none (terminal stage of pipeline).
+
+## Test Scenarios
+- Happy-path write creates `<out_prefix>.assoc.linear` with expected header and row count.
+- `hide-covar` output shape is reflected exactly in written rows.
+- Header-only output on no passing variants.
+- NA/stat-failure rows serialize without column shifts.
+- Write failure path surfaces clear filesystem error context.

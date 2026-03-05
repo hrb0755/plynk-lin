@@ -1,0 +1,75 @@
+# IO Module Design
+
+## Overview
+This module reads raw input datasets (VCF, phenotype, covariate), validates format-level constraints, and emits canonical in-memory/stream records plus metadata for alignment.
+
+## Responsibilities
+- Read and parse VCF input for supported subset: biallelic diploid autosomal GT workflow.
+- Read and parse phenotype file into sample-keyed records.
+- Read and parse covariate file when provided, including selected covariate names.
+- Validate record-level schema at file boundary.
+- Emit parsed datasets with metadata needed by alignment.
+
+Not owned by this module:
+- CLI flag validation.
+- Cross-file sample matching and row selection.
+- MAF filtering decisions.
+- Regression and `.assoc.linear` writing.
+
+## Inputs
+- `RunConfig` fields:
+  - `vcf_path`
+  - `pheno_path`
+  - `covar_path` (optional)
+  - `covar_names` (optional)
+
+## Outputs
+- `VcfDataset`:
+  - Variant metadata (chromosome, position, ID/ref/alt as available).
+  - Per-variant genotype calls keyed by sample ID.
+  - VCF header/sample ordering metadata.
+- `PhenoTable`:
+  - Sample IDs and phenotype values.
+- `CovarTable` (optional):
+  - Sample IDs and selected/all covariate columns.
+- Parse report metadata:
+  - Row/variant counts.
+  - Parse warnings/errors.
+
+## Interface Contract
+- `load_vcf(path: str) -> VcfDataset`
+- `load_pheno(path: str) -> PhenoTable`
+- `load_covar(path: str, covar_names: list[str] | None) -> CovarTable`
+- `load_inputs(cfg: RunConfig) -> ParsedInputs`
+- Parsing constraints:
+  - GT must be present and interpretable as diploid calls for supported variants.
+  - Non-biallelic or unsupported contig/genotype encodings are rejected or marked invalid per policy.
+  - Missing tokens are normalized to a common missing representation.
+
+Downstream contract:
+- Alignment receives normalized sample IDs and value types.
+- IO does not perform cross-file joins or deletions.
+
+## Edge Cases
+- VCF record with missing or malformed GT field.
+- Non-autosomal or non-biallelic variant record in input.
+- Duplicate sample IDs inside phenotype/covariate files.
+- Covariate name list contains unknown columns.
+- Empty files or header-only files.
+
+## Failure Modes
+- File open/read errors (path not found, permission denied).
+- Schema mismatch (missing required columns or malformed values).
+- Unsupported VCF genotype/variant representation for current subset.
+- Fatal parse errors should include file and line context where available.
+
+## Module Dependencies
+- Upstream: Arg/config parsing.
+- Downstream: Sample/variant alignment consumes parsed tables/datasets.
+
+## Test Scenarios
+- Happy-path VCF + pheno + covar parse with expected row/variant counts.
+- VCF containing unsupported variant type triggers controlled rejection.
+- Missing genotype tokens are normalized and carried forward.
+- Covariate column selection by `--covar-name` works with re-ordered columns.
+- Duplicate sample IDs are detected and reported deterministically.
