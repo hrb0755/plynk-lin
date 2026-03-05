@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plynk-lin"
+version = "0.1.0"
+description = "Minimal parser + IO slice for PLINK-like linear GWAS"
+requires-python = ">=3.10"
+dependencies = ["cyvcf2>=0.31"]
+
+[tool.setuptools]
+packages = ["plynk_lin"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
