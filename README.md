@@ -15,12 +15,12 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 ### Technical Focus
 1.  **Correctness:** Accurately reproduce the OLS regression for GWAS.
 2.  **Extensibility:** Implement the tool using separate modules for:
-    * Arg/config parsing
-    * IO
-    * Sample/variant alignment
-    * QC/filters
-    * Association testing
-    * Output writing
+    * [Arg/config parsing](design_docs/00_arg_config_parsing.md)
+    * [IO](design_docs/01_io.md)
+    * [Sample/variant alignment](design_docs/02_sample_variant_alignment.md)
+    * [QC/filters](design_docs/03_qc_filters.md)
+    * [Association testing](design_docs/04_association_testing.md)
+    * [Output writing](design_docs/05_output_writing.md)
 
 ---
 
