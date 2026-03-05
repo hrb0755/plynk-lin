@@ -24,6 +24,50 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 
 ---
 
+## Install and Test (for Modules Currently Implemented)
+Currently implemented:
+* Arg/config parsing
+* IO parsing (VCF/pheno/covar)
+* CLI parse-only entrypoint and smoke script
+
+### Dependencies
+`numpy, cyvcf2` and `pytest` for testing
+
+### Install
+With conda env `plynk`:
+```bash
+pip install -e . --no-build-isolation
+```
+
+
+### Run CLI (parse-only) 
+```bash
+python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
+```
+
+Optional covariates:
+```bash
+python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1 --out /tmp/out --debug
+```
+
+### Smoke check script
+```bash
+python scripts/smoke_io.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1
+```
+
+### Tests
+Run all tests:
+```bash
+python -m pytest -q
+```
+
+Run a specific test module:
+```bash
+python -m pytest -q tests/test_io_vcf.py
+```
+
+---
+
 ## Evaluation Strategy
 1.  **Correctness and Behavior Alignment:** * Compare results against PLINK using the same PS3-like dataset.
     * Validate per-SNP Beta/SE/t-stat/P agreement (correlation and max absolute differences).
