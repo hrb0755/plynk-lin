@@ -34,9 +34,9 @@ Not owned by this module:
 ## Interface Contract
 - `write_assoc_linear(results: AssocResultStream, out_prefix: str) -> WriteSummary`
 - Output schema policy:
-  - Include required PLINK-like columns in fixed order.
-  - Preserve upstream fields for `BETA`, `SE`, `T_STAT`, `P`, `NMISS`, `DF`.
-  - Use tab-delimited text with one header row.
+  - Include required PLINK-like columns in fixed order: `CHR SNP BP A1 TEST NMISS BETA STAT P`.
+  - Serialize the public association row fields only; internal fit diagnostics such as SE/DF are not written to `.assoc.linear`.
+  - Use deterministic whitespace-delimited text with one header row.
 - Formatting policy:
   - Numeric formatting is consistent run-wide.
   - Missing/unavailable values use a single NA token policy.

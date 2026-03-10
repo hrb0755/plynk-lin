@@ -21,6 +21,9 @@ Not owned by this module:
 - Final file formatting/writing.
 - External validation against PLINK.
 
+Implementation policy note:
+- Internal fit metadata may still track quantities such as standard errors and degrees of freedom for validation or debugging, but the public `.assoc.linear` row contract follows the PLINK-style schema used by the reference files: `CHR SNP BP A1 TEST NMISS BETA STAT P`.
+
 ## Inputs
 - `AlignedCohort` (`y`, `X_covar`, retained sample IDs).
 - QC-passed per-variant genotype vectors and metadata.
@@ -32,7 +35,7 @@ Not owned by this module:
 - `AssocResultRow` stream with fields compatible with `.assoc.linear` expectations, including:
   - Variant identifiers/metadata fields.
   - Test label (additive genotype test and covariate tests when not hidden).
-  - `BETA`, `SE`, `T_STAT`, `P`, `NMISS`, `DF`.
+  - `BETA`, `STAT`, `P`, `NMISS`.
 - Optional variant-level status metadata for skipped/failed fits.
 
 ## Interface Contract
