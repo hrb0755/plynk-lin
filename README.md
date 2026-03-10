@@ -8,7 +8,7 @@ The goal is to implement a minimal but expandable Python command-line tool that 
 
 The project aims to create a drop-in compatible CLI that matches PLINK behavior for a restricted subset of flags:
 * `--linear` (with `hide-covar` modifier)
-* `--vcf` (matching PS3 workflow, biallelic diploid autosomal GT only)
+* `--vcf` (matching PS3 workflow, diploid autosomal GT with multiallelic records reduced to the tested ALT allele for PLINK compatibility)
 * `--pheno`, `--covar`, `--covar-name`, `--maf`, `--allow-no-sex`
 * `--out` (output prefix for PLINK-like `.assoc.linear` table)
 
@@ -24,14 +24,20 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 
 ---
 
-## Install and Test (for Modules Currently Implemented)
+## Install and Test
 Currently implemented:
 * Arg/config parsing
 * IO parsing (VCF/pheno/covar)
-* CLI parse-only entrypoint and smoke script
+* Sample alignment and cohort listwise deletion
+* Variant QC with optional `--maf`
+* Per-variant linear association testing
+* PLINK-like `.assoc.linear` output writing
+* End-to-end CLI and smoke scripts
 
 ### Dependencies
-`numpy, cyvcf2` and `pytest` for testing
+`python 3.12`\
+`numpy, scipy, cyvcf2`\
+and also `pytest` for testing
 
 ### Install
 ```bash
@@ -39,8 +45,8 @@ pip install -e . --no-build-isolation
 ```
 
 
-### Run CLI (parse-only) 
-There are some same vcf files in `tests/data` folder.
+### Run CLI
+There are sample VCF/pheno/covar files in `tests/data`.
 ```bash
 python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
 ```
@@ -50,9 +56,11 @@ Optional covariates:
 python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1 --out /tmp/out --debug
 ```
 
-### Smoke check script
+### Smoke check scripts
 ```bash
 python scripts/smoke_io.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1
+
+python scripts/smoke_pipeline.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
 ```
 
 ### Tests
@@ -70,7 +78,7 @@ python -m pytest -q tests/test_io_vcf.py
 
 ## Evaluation Strategy
 1.  **Correctness and Behavior Alignment:** * Compare results against PLINK using the same PS3-like dataset.
-    * Validate per-SNP Beta/SE/t-stat/P agreement (correlation and max absolute differences).
+    * Validate per-SNP Beta/t-stat/P agreement (correlation and max absolute differences).
     * Compare top hits (top-K overlap and genome-wide significant hits).
 2.  **Data Integrity & Edge-case Alignment:**
     * Verify ID-based alignment by shuffling phenotype/covariate file orders.
