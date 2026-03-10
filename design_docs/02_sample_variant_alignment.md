@@ -3,6 +3,10 @@
 ## Overview
 This module aligns samples across VCF, phenotype, and optional covariate inputs using sample IDs, applies deterministic ordering, and builds analysis-ready structures for QC and association testing.
 
+Implementation note:
+- Alignment outputs will be materialized with `numpy` arrays for efficient downstream masking, ordering, and matrix construction.
+- If table-style joins or reshaping become more complex during implementation, a lightweight `pandas` layer may be used at the file-to-array boundary before converting to the canonical in-memory structures used by the pipeline.
+
 ## Responsibilities
 - Resolve sample identity across parsed inputs by sample ID.
 - Define a deterministic retained-sample order.
@@ -63,6 +67,9 @@ Not owned by this module:
 - Downstream:
   - QC consumes aligned variant genotype vectors and cohort size context.
   - Association testing consumes aligned `y`, `X_covar`, and per-variant `g`.
+- External dependencies:
+  - `numpy` (primary array container for aligned phenotype, covariate, and genotype data).
+  - `pandas` (optional helper for ID-based joins and table reshaping if needed during implementation).
 
 ## Test Scenarios
 - Shuffled pheno/covar row order still yields correct alignment by ID.

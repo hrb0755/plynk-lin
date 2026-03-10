@@ -3,6 +3,11 @@
 ## Overview
 This module performs per-variant OLS-based linear association testing against phenotype, with optional covariate adjustment, producing PLINK-like association result rows.
 
+Implementation note:
+- Core regression machinery will be built on `numpy` linear algebra primitives for design-matrix assembly and least-squares fitting.
+- `scipy` will be used for statistical inference utilities such as test-statistic to p-value calculations.
+- During development or validation, `statsmodels` may be used as a reference implementation to cross-check OLS behavior before finalizing the project-specific regression path.
+
 ## Responsibilities
 - Build regression design per tested variant using aligned phenotype/covariate/genotype data.
 - Execute OLS for each QC-passed variant.
@@ -59,6 +64,10 @@ Not owned by this module:
   - QC/filters for variant eligibility.
 - Downstream:
   - Output writing module consumes association row stream.
+- External dependencies:
+  - `numpy` (design matrices, solves, residual calculations, and per-variant matrix operations).
+  - `scipy` (distribution functions and other statistical inference helpers).
+  - `statsmodels` (optional reference implementation for validation and debugging of OLS behavior).
 
 ## Test Scenarios
 - Happy-path per-variant OLS with and without covariates.

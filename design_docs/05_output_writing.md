@@ -3,6 +3,10 @@
 ## Overview
 This module serializes association result rows into PLINK-like `.assoc.linear` output using the configured `--out` prefix, with deterministic ordering and formatting rules.
 
+Implementation note:
+- Output writing is expected to rely primarily on Python standard-library file I/O.
+- If result assembly benefits from tabular staging before serialization, an off-the-shelf table library such as `pandas` may be used as a convenience layer, but it is not required for the core writer.
+
 ## Responsibilities
 - Materialize output path from `--out` prefix.
 - Write `.assoc.linear` header and rows in defined column order.
@@ -53,6 +57,9 @@ Not owned by this module:
 ## Module Dependencies
 - Upstream: Association testing result stream and run config.
 - Downstream: none (terminal stage of pipeline).
+- External dependencies:
+  - Standard library I/O is expected to be sufficient for the core writer.
+  - `pandas` is optional if tabular result staging simplifies formatting or export logic.
 
 ## Test Scenarios
 - Happy-path write creates `<out_prefix>.assoc.linear` with expected header and row count.

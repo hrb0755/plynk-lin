@@ -3,6 +3,9 @@
 ## Overview
 This module applies variant-level quality control filters to aligned variants, primarily minor allele frequency filtering (`--maf`), and emits pass/fail decisions with traceable metadata.
 
+Implementation note:
+- QC computations will use `numpy` arrays and masking operations to efficiently handle genotype missingness, allele counting, and threshold-based filtering across variants.
+
 ## Responsibilities
 - Compute per-variant QC metrics required by current scope.
 - Apply configured filters, at minimum MAF threshold.
@@ -57,6 +60,8 @@ Not owned by this module:
 ## Module Dependencies
 - Upstream: Sample/variant alignment.
 - Downstream: Association testing consumes QC-passed variants and QC metadata as needed.
+- External dependencies:
+  - `numpy` (vectorized genotype summaries, missingness masks, and MAF computation).
 
 ## Test Scenarios
 - MAF threshold off: all valid variants pass this module.
