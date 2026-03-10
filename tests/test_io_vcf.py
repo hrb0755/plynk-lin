@@ -16,12 +16,35 @@ def test_load_vcf_happy_path() -> None:
     assert ds.variants[1].genotypes_by_sample["S2"] is None
 
 
-def test_load_vcf_rejects_multiallelic() -> None:
-    with pytest.raises(InputParseError, match="non-biallelic"):
-        load_vcf("tests/data/test_bad_multiallelic.vcf")
+def test_load_vcf_skips_multiallelic() -> None:
+    ds = load_vcf("tests/data/test_bad_multiallelic.vcf")
+    variants = list(ds.iter_variants())
+    assert len(variants) == 1
+    assert variants[0].alt == "G"
+    assert variants[0].genotypes_by_sample["S1"] == 1
+
+
+def test_load_vcf_multiallelic_nonfirst_alt_becomes_missing() -> None:
+    ds = load_vcf("tests/data/test_multiallelic_secondary_gt.vcf")
+    variants = list(ds.iter_variants())
+    assert len(variants) == 1
+    assert variants[0].alt == "G"
+    assert variants[0].genotypes_by_sample["S1"] == 1
+    assert variants[0].genotypes_by_sample["S2"] is None
+    assert variants[0].genotypes_by_sample["S3"] is None
+
+
+def test_load_vcf_multiallelic_chooses_most_common_alt() -> None:
+    ds = load_vcf("tests/data/test_multiallelic_choose_dominant_alt.vcf")
+    variants = list(ds.iter_variants())
+    assert len(variants) == 1
+    assert variants[0].alt == "T"
+    assert variants[0].genotypes_by_sample["S1"] == 1
+    assert variants[0].genotypes_by_sample["S2"] == 2
+    assert variants[0].genotypes_by_sample["S3"] == 0
+    assert variants[0].genotypes_by_sample["S4"] is None
 
 
 def test_load_vcf_rejects_bad_gt() -> None:
     with pytest.raises(InputParseError, match="Only biallelic 0/1 GT supported"):
-        load_vcf("tests/data/test_bad_gt.vcf")
-
+        list(load_vcf("tests/data/test_bad_gt.vcf").iter_variants())

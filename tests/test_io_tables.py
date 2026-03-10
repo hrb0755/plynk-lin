@@ -19,6 +19,13 @@ def test_load_pheno_duplicate_iid_fails() -> None:
         load_pheno("tests/data/pheno_dup.txt")
 
 
+def test_load_pheno_headerless_happy_path() -> None:
+    pheno = load_pheno("tests/data/pheno_headerless.txt")
+    assert pheno.sample_ids == ["S1", "S2", "S3"]
+    assert pheno.phenotype_column == "PHENO"
+    assert pheno.values_by_sample["S3"] is None
+
+
 def test_load_covar_subset_happy_path() -> None:
     covar = load_covar("tests/data/covar.txt", ["AGE", "PC1"])
     assert covar.covar_columns == ["AGE", "PC1"]
@@ -34,4 +41,3 @@ def test_load_covar_unknown_column_fails() -> None:
 def test_load_covar_duplicate_iid_fails() -> None:
     with pytest.raises(InputParseError, match="Duplicate IID"):
         load_covar("tests/data/covar_dup.txt", None)
-

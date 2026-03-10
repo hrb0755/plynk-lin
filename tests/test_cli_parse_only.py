@@ -12,15 +12,15 @@ def test_cli_parse_success_with_debug() -> None:
             "plynk_lin",
             "--linear",
             "--vcf",
-            "tests/data/test.vcf",
+            "tests/data/pipeline.vcf",
             "--pheno",
-            "tests/data/pheno.txt",
+            "tests/data/pheno_complete.txt",
             "--covar",
-            "tests/data/covar.txt",
+            "tests/data/covar_complete.txt",
             "--covar-name",
             "AGE,PC1",
             "--out",
-            "tmp/out",
+            "tmp/out_cli",
             "--debug",
         ],
         check=False,
@@ -28,9 +28,9 @@ def test_cli_parse_success_with_debug() -> None:
         text=True,
     )
     assert proc.returncode == 0
-    assert "parse summary" in proc.stdout
-    assert "VCF samples" in proc.stdout
-    assert "Variant preview" in proc.stdout
+    assert "pipeline summary" in proc.stdout
+    assert "Rows written" in proc.stdout
+    assert "QC passed variants" in proc.stdout
 
 
 def test_cli_parse_failure_bad_vcf() -> None:
@@ -53,4 +53,3 @@ def test_cli_parse_failure_bad_vcf() -> None:
     )
     assert proc.returncode != 0
     assert "Parse error" in proc.stderr
-
