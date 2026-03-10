@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "plynk-lin"
 version = "0.1.0"
-description = "Minimal parser + IO slice for PLINK-like linear GWAS"
+description = "Minimal PLINK-like linear GWAS pipeline"
 requires-python = ">=3.10"
-dependencies = ["cyvcf2>=0.31"]
+dependencies = ["cyvcf2>=0.31", "numpy>=2.0", "scipy>=1.13"]
 
 [tool.setuptools]
 packages = ["plynk_lin"]

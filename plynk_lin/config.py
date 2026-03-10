@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Callable, Iterator, Optional
+
+import numpy as np
 
 
 MISSING_TOKENS = {"", ".", "NA", "nan", "-9"}
@@ -71,8 +73,18 @@ class VariantRecord:
 class VcfDataset:
     path: str
     sample_ids: list[str]
-    variants: list[VariantRecord]
     report: ParseReport
+    _variant_iter_factory: Callable[[], Iterator[VariantRecord]] = field(repr=False)
+    _variants_cache: list[VariantRecord] | None = field(default=None, init=False, repr=False)
+
+    def iter_variants(self) -> Iterator[VariantRecord]:
+        return self._variant_iter_factory()
+
+    @property
+    def variants(self) -> list[VariantRecord]:
+        if self._variants_cache is None:
+            self._variants_cache = list(self.iter_variants())
+        return self._variants_cache
 
 
 @dataclass
@@ -99,3 +111,101 @@ class ParsedInputs:
     pheno: PhenoTable
     covar: Optional[CovarTable]
 
+
+@dataclass(frozen=True)
+class AlignmentAudit:
+    not_in_pheno: int
+    not_in_covar: int
+    missing_pheno: int
+    missing_covar: int
+    retained: int
+
+
+@dataclass
+class AlignedCohort:
+    sample_ids: list[str]
+    y: np.ndarray
+    X_covar: np.ndarray | None
+    covar_names: list[str]
+    sample_index: dict[str, int]
+    audit: AlignmentAudit
+
+
+@dataclass(frozen=True)
+class AlignedVariant:
+    chrom: str
+    pos: int
+    variant_id: str
+    ref: str
+    alt: str
+    a1: str
+    g: np.ndarray
+
+
+@dataclass
+class AlignedInputs:
+    cohort: AlignedCohort
+    _variant_iter_factory: Callable[[], Iterator[AlignedVariant]] = field(repr=False)
+
+    def iter_variants(self) -> Iterator[AlignedVariant]:
+        return self._variant_iter_factory()
+
+
+@dataclass(frozen=True)
+class QcDecision:
+    passed: bool
+    reasons: list[str]
+    maf_value: float | None
+    non_missing_genotype_count: int
+
+
+@dataclass(frozen=True)
+class FilteredVariant:
+    variant: AlignedVariant
+    qc: QcDecision
+
+
+@dataclass
+class QcSummary:
+    total_variants: int = 0
+    passed_variants: int = 0
+    failed_variants: int = 0
+
+
+@dataclass(frozen=True)
+class AssocResultRow:
+    chrom: str
+    snp: str
+    bp: int
+    a1: str
+    test: str
+    nmiss: int
+    beta: float
+    stat: float
+    p: float
+
+
+@dataclass(frozen=True)
+class FitStats:
+    term_names: list[str]
+    beta: np.ndarray
+    se: np.ndarray
+    stat: np.ndarray
+    p: np.ndarray
+    nmiss: int
+    df: int
+    status: str
+
+
+@dataclass
+class AssocSummary:
+    processed_variants: int = 0
+    fit_failures: int = 0
+    emitted_rows: int = 0
+
+
+@dataclass(frozen=True)
+class WriteSummary:
+    output_path: str
+    row_count: int
+    success: bool
