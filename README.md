@@ -74,6 +74,15 @@ Run a specific test module:
 python -m pytest -q tests/test_io_vcf.py
 ```
 
+To test the package end-to-end with PS3 datasets:
+* Create a new directory `ref_data` in the project root
+* Copy the PS3 data `ps3_gwas.vcf.gz` and `ps3_gwas.phen` there, and 
+* Create a `ref_out` folder inside `ref_data` and put in the reference output `ps3_gwas.assoc.linear`
+* Run:
+``` bash
+PLYNK_RUN_REFERENCE=1 python -m pytest -q tests/test_end_to_end.py -k reference_dataset_regression
+```
+
 ---
 
 ## Evaluation Strategy
