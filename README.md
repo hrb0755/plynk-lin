@@ -77,7 +77,8 @@ python -m pytest -q tests/test_io_vcf.py
 ---
 
 ## Evaluation Strategy
-1.  **Correctness and Behavior Alignment:** * Compare results against PLINK using the same PS3-like dataset.
+1.  **Correctness and Behavior Alignment:** 
+    * Compare results against PLINK using the same PS3-like dataset.
     * Validate per-SNP Beta/t-stat/P agreement (correlation and max absolute differences).
     * Compare top hits (top-K overlap and genome-wide significant hits).
 2.  **Data Integrity & Edge-case Alignment:**
