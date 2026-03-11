@@ -18,12 +18,11 @@ def test_write_assoc_linear_header_only(tmp_path: Path) -> None:
 def test_write_assoc_linear_writes_rows(tmp_path: Path) -> None:
     rows = [
         AssocResultRow("1", "rs1", 100, "G", "ADD", 5, 0.5, 2.0, 0.04),
-        AssocResultRow("1", "rs1", 100, "G", "AGE", 5, 0.1, 1.2, 0.2),
     ]
     summary = write_assoc_linear(rows, str(tmp_path / "out"))
     text = (tmp_path / "out.assoc.linear").read_text(encoding="utf-8").strip().splitlines()
 
-    assert summary.row_count == 2
+    assert summary.row_count == 1
     assert text[0].split() == ["CHR", "SNP", "BP", "A1", "TEST", "NMISS", "BETA", "STAT", "P"]
     assert text[1] == "   1                                             rs1        100    G        ADD        5        0.5            2         0.04"
     assert text[1].split()[:5] == ["1", "rs1", "100", "G", "ADD"]

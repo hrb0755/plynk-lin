@@ -7,7 +7,7 @@ from plynk_lin.qc_filters import apply_variant_filters, compute_maf
 
 
 def _cfg(maf: float | None) -> RunConfig:
-    return RunConfig(True, False, "x.vcf", "p.txt", None, None, maf, False, "out")
+    return RunConfig(True, "x.vcf", "p.txt", maf, False, "out")
 
 
 def test_compute_maf_boundary() -> None:

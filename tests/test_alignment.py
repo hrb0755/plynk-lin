@@ -4,7 +4,6 @@ import pytest
 
 from plynk_lin.alignment import align_samples
 from plynk_lin.config import (
-    CovarTable,
     InputParseError,
     ParseReport,
     ParsedInputs,
@@ -45,13 +44,6 @@ def test_align_samples_uses_vcf_order_and_listwise_deletion() -> None:
             phenotype_column="PHENO",
             report=ParseReport(source="pheno.txt"),
         ),
-        covar=CovarTable(
-            path="covar.txt",
-            sample_ids=["S1", "S2", "S3"],
-            covar_columns=["AGE"],
-            values_by_sample={"S1": {"AGE": 30.0}, "S2": {"AGE": 31.0}, "S3": {"AGE": 40.0}},
-            report=ParseReport(source="covar.txt"),
-        ),
     )
 
     aligned = align_samples(parsed)
@@ -65,7 +57,7 @@ def test_align_samples_uses_vcf_order_and_listwise_deletion() -> None:
     assert variant.g.tolist() == [0.0, 1.0]
 
 
-def test_align_samples_drops_missing_covariates() -> None:
+def test_align_samples_ignores_pheno_only_missing_rows() -> None:
     parsed = ParsedInputs(
         vcf=_make_vcf(
             ["S1", "S2"],
@@ -83,23 +75,16 @@ def test_align_samples_drops_missing_covariates() -> None:
         pheno=PhenoTable(
             path="pheno.txt",
             sample_ids=["S1", "S2"],
-            values_by_sample={"S1": 1.0, "S2": 2.0},
+            values_by_sample={"S1": None, "S2": 2.0},
             phenotype_column="PHENO",
             report=ParseReport(source="pheno.txt"),
-        ),
-        covar=CovarTable(
-            path="covar.txt",
-            sample_ids=["S1", "S2"],
-            covar_columns=["PC1"],
-            values_by_sample={"S1": {"PC1": None}, "S2": {"PC1": 0.2}},
-            report=ParseReport(source="covar.txt"),
         ),
     )
 
     aligned = align_samples(parsed)
 
     assert aligned.cohort.sample_ids == ["S2"]
-    assert aligned.cohort.audit.missing_covar == 1
+    assert aligned.cohort.audit.missing_pheno == 1
 
 
 def test_align_samples_empty_overlap_fails() -> None:
@@ -124,7 +109,6 @@ def test_align_samples_empty_overlap_fails() -> None:
             phenotype_column="PHENO",
             report=ParseReport(source="pheno.txt"),
         ),
-        covar=None,
     )
 
     with pytest.raises(InputParseError, match="No overlapping samples"):
