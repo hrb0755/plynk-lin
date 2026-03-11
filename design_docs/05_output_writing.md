@@ -63,7 +63,6 @@ Not owned by this module:
 
 ## Test Scenarios
 - Happy-path write creates `<out_prefix>.assoc.linear` with expected header and row count.
-- `hide-covar` output shape is reflected exactly in written rows.
 - Header-only output on no passing variants.
 - NA/stat-failure rows serialize without column shifts.
 - Write failure path surfaces clear filesystem error context.

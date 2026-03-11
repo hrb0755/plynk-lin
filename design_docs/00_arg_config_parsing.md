@@ -4,7 +4,7 @@
 This module parses and validates command-line arguments for the supported PLINK-like subset, then emits a normalized run configuration for downstream modules.
 
 ## Responsibilities
-- Parse supported flags: `--linear`, `--vcf`, `--pheno`, `--covar`, `--covar-name`, `--maf`, `--allow-no-sex`, `--out`, and `hide-covar` modifier.
+- Parse supported flags: `--linear`, `--vcf`, `--pheno`, `--maf`, `--allow-no-sex`, and `--out`.
 - Normalize user inputs into a typed configuration object with defaults.
 - Validate flag presence, value types, and allowed combinations.
 - Emit actionable, user-facing errors for invalid invocations.
@@ -22,11 +22,8 @@ Not owned by this module:
 ## Outputs
 - `RunConfig` object, for example:
   - `linear_enabled: bool` (required; must be true)
-  - `hide_covar: bool` (default `false`)
   - `vcf_path: str` (required)
   - `pheno_path: str` (required)
-  - `covar_path: str | None` (optional)
-  - `covar_names: list[str] | None` (optional)
   - `maf_threshold: float | None` (optional)
   - `allow_no_sex: bool` (default `false`)
   - `out_prefix: str` (required)
@@ -38,8 +35,6 @@ Not owned by this module:
 - Validation rules:
   - `--linear` is required.
   - `--vcf`, `--pheno`, and `--out` are required.
-  - `hide-covar` is legal only as a `--linear` modifier.
-  - `--covar-name` requires `--covar`.
   - `--maf` must parse as numeric and satisfy `0.0 <= maf <= 0.5`.
   - Unknown flags fail fast.
 
@@ -50,7 +45,6 @@ Downstream contract:
 ## Edge Cases
 - Missing required flags (`--linear`, `--vcf`, `--pheno`, `--out`).
 - `--maf` malformed (non-numeric) or outside bounds.
-- `--covar-name` provided without `--covar`.
 - Repeated flags with conflicting values.
 - Empty `--out` prefix.
 
@@ -62,14 +56,12 @@ Downstream contract:
 ## Module Dependencies
 - Upstream: process entrypoint/main.
 - Downstream:
-  - IO consumes `vcf_path`, `pheno_path`, `covar_path`, and `covar_names`.
+  - IO consumes `vcf_path` and `pheno_path`.
   - QC consumes `maf_threshold`.
-  - Association/output consume `linear_enabled`, `hide_covar`, `out_prefix`.
+  - Association/output consume `linear_enabled` and `out_prefix`.
 
 ## Test Scenarios
 - Valid happy-path invocation with all supported flags.
 - Invocation with shuffled flag ordering still parses identically.
-- `--covar-name` without `--covar` returns clear validation error.
 - `--maf` at `0.0`, `0.5`, below `0`, above `0.5`.
-- `hide-covar` accepted only with `--linear`.
 - Unknown flag fails with deterministic message.

@@ -7,9 +7,9 @@ This is solo project for CSE 284. This repo is as of now still work in progress.
 The goal is to implement a minimal but expandable Python command-line tool that reproduces the core functionality of **PLINK 1.9's linear-regression GWAS** (`plink --linear`). 
 
 The project aims to create a drop-in compatible CLI that matches PLINK behavior for a restricted subset of flags:
-* `--linear` (with `hide-covar` modifier)
+* `--linear`
 * `--vcf` (matching PS3 workflow, diploid autosomal GT with multiallelic records reduced to the tested ALT allele for PLINK compatibility)
-* `--pheno`, `--covar`, `--covar-name`, `--maf`, `--allow-no-sex`
+* `--pheno`, `--maf`, `--allow-no-sex`
 * `--out` (output prefix for PLINK-like `.assoc.linear` table)
 
 ### Technical Focus
@@ -27,7 +27,7 @@ The project aims to create a drop-in compatible CLI that matches PLINK behavior 
 ## Install and Test
 Currently implemented:
 * Arg/config parsing
-* IO parsing (VCF/pheno/covar)
+* IO parsing (VCF/pheno)
 * Sample alignment and cohort listwise deletion
 * Variant QC with optional `--maf`
 * Per-variant linear association testing
@@ -46,19 +46,14 @@ pip install -e . --no-build-isolation
 
 
 ### Run CLI
-There are sample VCF/pheno/covar files in `tests/data`.
+There are sample VCF/pheno files in `tests/data`.
 ```bash
 python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
 ```
 
-Optional covariates:
-```bash
-python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1 --out /tmp/out --debug
-```
-
 ### Smoke check scripts
 ```bash
-python scripts/smoke_io.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --covar /path/to/covar.txt --covar-name AGE,PC1
+python scripts/smoke_io.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt
 
 python scripts/smoke_pipeline.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
 ```
@@ -91,7 +86,7 @@ PLYNK_RUN_REFERENCE=1 python -m pytest -q tests/test_end_to_end.py -k reference_
     * Validate per-SNP Beta/t-stat/P agreement (correlation and max absolute differences).
     * Compare top hits (top-K overlap and genome-wide significant hits).
 2.  **Data Integrity & Edge-case Alignment:**
-    * Verify ID-based alignment by shuffling phenotype/covariate file orders.
+    * Verify ID-based alignment by shuffling phenotype file order.
     * Confirm listwise deletion and matching NMISS/df conventions by injecting missing values.
 3.  **Performance Benchmark:**
     * Measure runtime and peak memory usage on varying datasets.

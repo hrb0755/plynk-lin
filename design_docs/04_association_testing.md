@@ -1,7 +1,7 @@
 # Association Testing Module Design
 
 ## Overview
-This module performs per-variant OLS-based linear association testing against phenotype, with optional covariate adjustment, producing PLINK-like association result rows.
+This module performs per-variant OLS-based linear association testing against phenotype, producing PLINK-like association result rows.
 
 Implementation note:
 - Core regression machinery will be built on `numpy` linear algebra primitives for design-matrix assembly and least-squares fitting.
@@ -9,11 +9,10 @@ Implementation note:
 - During development or validation, `statsmodels` may be used as a reference implementation to cross-check OLS behavior before finalizing the project-specific regression path.
 
 ## Responsibilities
-- Build regression design per tested variant using aligned phenotype/covariate/genotype data.
+- Build regression design per tested variant using aligned phenotype/genotype data.
 - Execute OLS for each QC-passed variant.
 - Compute and emit effect estimate and inference statistics required for output compatibility.
 - Preserve NMISS and df-compatible fields for PLINK-like interpretation.
-- Respect `hide-covar` behavior for emitted rows.
 
 Not owned by this module:
 - Input parsing and sample alignment.
@@ -25,30 +24,26 @@ Implementation policy note:
 - Internal fit metadata may still track quantities such as standard errors and degrees of freedom for validation or debugging, but the public `.assoc.linear` row contract follows the PLINK-style schema used by the reference files: `CHR SNP BP A1 TEST NMISS BETA STAT P`.
 
 ## Inputs
-- `AlignedCohort` (`y`, `X_covar`, retained sample IDs).
+- `AlignedCohort` (`y`, retained sample IDs).
 - QC-passed per-variant genotype vectors and metadata.
 - Config flags:
   - `linear_enabled`
-  - `hide_covar`
 
 ## Outputs
 - `AssocResultRow` stream with fields compatible with `.assoc.linear` expectations, including:
   - Variant identifiers/metadata fields.
-  - Test label (additive genotype test and covariate tests when not hidden).
+  - Test label for the additive genotype test.
   - `BETA`, `STAT`, `P`, `NMISS`.
 - Optional variant-level status metadata for skipped/failed fits.
 
 ## Interface Contract
-- `run_linear_assoc(cohort: AlignedCohort, variants: FilteredVariantStream, cfg: RunConfig) -> AssocResultStream`
-- `fit_variant_ols(y, X_base, g) -> FitStats`
+- `run_linear_assoc(cohort: AlignedCohort, variants: FilteredVariantStream) -> AssocResultStream`
+- `fit_variant_ols(y, g) -> FitStats`
 - Model policy:
-  - OLS with intercept, genotype term, and optional covariate terms.
-  - Variant-specific usable row set based on non-missing genotype and required covariates/phenotype.
+  - OLS with intercept and genotype term.
+  - Variant-specific usable row set based on non-missing genotype and phenotype.
   - `NMISS` reflects usable rows for the specific variant test.
   - `DF` derived from usable rows minus number of fitted parameters.
-- `hide-covar` policy:
-  - If enabled, emit genotype test rows only.
-  - If disabled, emit genotype and covariate test rows per output convention.
 
 ## Edge Cases
 - Singular design matrix due to collinearity.
@@ -73,8 +68,7 @@ Implementation policy note:
   - `statsmodels` (optional reference implementation for validation and debugging of OLS behavior).
 
 ## Test Scenarios
-- Happy-path per-variant OLS with and without covariates.
-- `hide-covar` toggles row emission correctly.
+- Happy-path per-variant OLS on additive genotype effect.
 - NMISS changes appropriately with variant-specific genotype missingness.
 - Singular matrix case handled with deterministic skip/NA behavior.
 - Output stats fields are present and type-consistent for all processed variants.
