@@ -3,7 +3,6 @@ from __future__ import annotations
 from cyvcf2 import VCF
 
 from plynk_lin.config import (
-    CovarTable,
     InputParseError,
     MISSING_TOKENS,
     ParseReport,
@@ -212,64 +211,7 @@ def load_pheno(path: str) -> PhenoTable:
     )
 
 
-def load_covar(path: str, covar_names: list[str] | None) -> CovarTable:
-    report = ParseReport(source=path)
-    rows = _read_nonempty_rows(path)
-    header_line, header = rows[0]
-    if len(header) < 3:
-        raise InputParseError(f"Expected at least 3 columns (FID IID VALUE...) in {path}")
-    if header[0] != "FID" or header[1] != "IID":
-        raise InputParseError(
-            f"Covariate file requires a header starting with 'FID IID' in {path}:{header_line}"
-        )
-
-    value_columns = header[2:]
-    if covar_names is None:
-        selected = list(value_columns)
-    else:
-        missing = [name for name in covar_names if name not in value_columns]
-        if missing:
-            raise InputParseError(f"Unknown covariate column(s) in {path}: {', '.join(missing)}")
-        selected = list(covar_names)
-
-    selected_idx = {name: header.index(name) for name in selected}
-    sample_ids: list[str] = []
-    values_by_sample: dict[str, dict[str, float | None]] = {}
-
-    for line_number, cols in rows[1:]:
-        report.records_read += 1
-        if len(cols) != len(header):
-            raise InputParseError(
-                f"Column count mismatch at {path}:{line_number} (expected {len(header)}, got {len(cols)})"
-            )
-        iid = cols[1]
-        if iid in values_by_sample:
-            raise InputParseError(f"Duplicate IID '{iid}' at {path}:{line_number}")
-
-        row_vals: dict[str, float | None] = {}
-        for name, idx in selected_idx.items():
-            token = cols[idx]
-            try:
-                row_vals[name] = _parse_float(token)
-            except ValueError as exc:
-                raise InputParseError(
-                    f"Invalid covariate value for '{name}' at {path}:{line_number}: {exc}"
-                ) from exc
-
-        values_by_sample[iid] = row_vals
-        sample_ids.append(iid)
-
-    return CovarTable(
-        path=path,
-        sample_ids=sample_ids,
-        covar_columns=selected,
-        values_by_sample=values_by_sample,
-        report=report,
-    )
-
-
 def load_inputs(cfg: RunConfig) -> ParsedInputs:
     vcf = load_vcf(cfg.vcf_path)
     pheno = load_pheno(cfg.pheno_path)
-    covar = load_covar(cfg.covar_path, cfg.covar_names) if cfg.covar_path else None
-    return ParsedInputs(vcf=vcf, pheno=pheno, covar=covar)
+    return ParsedInputs(vcf=vcf, pheno=pheno)

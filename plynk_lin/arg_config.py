@@ -6,22 +6,11 @@ from typing import Sequence
 from plynk_lin.config import ConfigError, RunConfig
 
 
-def _split_covar_names(raw: str | None) -> list[str] | None:
-    if raw is None:
-        return None
-    names = [part.strip() for part in raw.split(",") if part.strip()]
-    if not names:
-        raise ConfigError("--covar-name must include at least one non-empty name")
-    return names
-
-
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="plynk_lin")
     parser.add_argument("--linear", action="store_true", dest="linear_enabled")
     parser.add_argument("--vcf", dest="vcf_path")
     parser.add_argument("--pheno", dest="pheno_path")
-    parser.add_argument("--covar", dest="covar_path")
-    parser.add_argument("--covar-name", dest="covar_names")
     parser.add_argument("--maf", dest="maf_threshold", type=float)
     parser.add_argument("--allow-no-sex", action="store_true", dest="allow_no_sex")
     parser.add_argument("--out", dest="out_prefix")
@@ -42,18 +31,13 @@ def parse_args(argv: Sequence[str]) -> RunConfig:
         raise ConfigError("Invalid arguments") from exc
 
     modifiers = namespace.linear_modifiers or []
-    allowed_modifiers = {"hide-covar"}
-    unknown = [m for m in modifiers if m not in allowed_modifiers]
-    if unknown:
-        raise ConfigError(f"Unknown modifier(s): {', '.join(unknown)}")
+    if modifiers:
+        raise ConfigError(f"Unknown modifier(s): {', '.join(modifiers)}")
 
     cfg = RunConfig(
         linear_enabled=bool(namespace.linear_enabled),
-        hide_covar="hide-covar" in modifiers,
         vcf_path=namespace.vcf_path or "",
         pheno_path=namespace.pheno_path or "",
-        covar_path=namespace.covar_path,
-        covar_names=_split_covar_names(namespace.covar_names),
         maf_threshold=namespace.maf_threshold,
         allow_no_sex=bool(namespace.allow_no_sex),
         out_prefix=namespace.out_prefix or "",
@@ -75,12 +59,6 @@ def validate_config(cfg: RunConfig) -> None:
         raise ConfigError("--pheno is required")
     if not cfg.out_prefix:
         raise ConfigError("--out is required and cannot be empty")
-
-    if cfg.hide_covar and not cfg.linear_enabled:
-        raise ConfigError("hide-covar is only allowed with --linear")
-
-    if cfg.covar_names is not None and not cfg.covar_path:
-        raise ConfigError("--covar-name requires --covar")
 
     if cfg.maf_threshold is not None and not (0.0 <= cfg.maf_threshold <= 0.5):
         raise ConfigError("--maf must satisfy 0.0 <= maf <= 0.5")

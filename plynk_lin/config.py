@@ -24,11 +24,8 @@ class InputParseError(PlynkError):
 @dataclass(frozen=True)
 class RunConfig:
     linear_enabled: bool
-    hide_covar: bool
     vcf_path: str
     pheno_path: str
-    covar_path: Optional[str]
-    covar_names: Optional[list[str]]
     maf_threshold: Optional[float]
     allow_no_sex: bool
     out_prefix: str
@@ -97,27 +94,15 @@ class PhenoTable:
 
 
 @dataclass
-class CovarTable:
-    path: str
-    sample_ids: list[str]
-    covar_columns: list[str]
-    values_by_sample: dict[str, dict[str, Optional[float]]]
-    report: ParseReport
-
-
-@dataclass
 class ParsedInputs:
     vcf: VcfDataset
     pheno: PhenoTable
-    covar: Optional[CovarTable]
 
 
 @dataclass(frozen=True)
 class AlignmentAudit:
     not_in_pheno: int
-    not_in_covar: int
     missing_pheno: int
-    missing_covar: int
     retained: int
 
 
@@ -125,8 +110,6 @@ class AlignmentAudit:
 class AlignedCohort:
     sample_ids: list[str]
     y: np.ndarray
-    X_covar: np.ndarray | None
-    covar_names: list[str]
     sample_index: dict[str, int]
     audit: AlignmentAudit
 

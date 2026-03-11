@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         qc_summary = QcSummary()
         assoc_summary = AssocSummary()
         filtered = filter_variants(aligned.iter_variants(), cfg, summary=qc_summary)
-        results = run_linear_assoc(aligned.cohort, filtered, cfg, summary=assoc_summary)
+        results = run_linear_assoc(aligned.cohort, filtered, summary=assoc_summary)
         write_summary = write_assoc_linear(results, cfg.out_prefix)
     except ConfigError as exc:
         print(f"Config error: {exc}", file=sys.stderr)
