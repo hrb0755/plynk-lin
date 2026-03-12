@@ -3,6 +3,7 @@ set -euo pipefail
 
 BENCHMARK_DIR="benchmark"
 RUN_PLINK=0
+RUN_PLINK_BFILE=0
 RUN_PLYNK_LIN=0
 PLINK_CMD="plink"
 PLYNK_LIN_CMD=""
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --plink)
       RUN_PLINK=1
+      shift
+      ;;
+    --plink-bfile)
+      RUN_PLINK_BFILE=1
       shift
       ;;
     --plynk-lin)
@@ -56,8 +61,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$RUN_PLINK" -eq 0 && "$RUN_PLYNK_LIN" -eq 0 ]]; then
-  echo "Provide at least one of --plink or --plynk-lin" >&2
+if [[ "$RUN_PLINK" -eq 0 && "$RUN_PLINK_BFILE" -eq 0 && "$RUN_PLYNK_LIN" -eq 0 ]]; then
+  echo "Provide at least one of --plink, --plink-bfile, or --plynk-lin" >&2
   exit 2
 fi
 
@@ -81,6 +86,7 @@ fi
 mkdir -p "$RUNS_DIR"
 
 while IFS=$'\t' read -r family dataset_name output_dir sample_count variant_count; do
+  [[ -z "$family" ]] && continue
   vcf_path="${output_dir}/subset.vcf.gz"
   pheno_path="${output_dir}/subset.phen"
   if [[ ! -f "$vcf_path" || ! -f "$pheno_path" ]]; then
@@ -102,6 +108,27 @@ while IFS=$'\t' read -r family dataset_name output_dir sample_count variant_coun
       --csv "$RESULTS_CSV" \
       --run-dir "$run_dir" \
       --shell-command "$shell_cmd" || true
+  fi
+
+  if [[ "$RUN_PLINK_BFILE" -eq 1 ]]; then
+    bfile_prefix="${output_dir}/subset_bfile"
+    if [[ ! -f "${bfile_prefix}.bed" || ! -f "${bfile_prefix}.bim" || ! -f "${bfile_prefix}.fam" ]]; then
+      echo "Skipping ${family}/${dataset_name}: missing bfile files for prefix ${bfile_prefix}" >&2
+    else
+      run_dir="${RUNS_DIR}/plink-bfile/${family}/${dataset_name}"
+      out_prefix="${run_dir}/result"
+      printf -v shell_cmd '%s --bfile %q --pheno %q --linear --maf 0.05 --allow-no-sex --out %q' \
+        "$PLINK_CMD" "$bfile_prefix" "$pheno_path" "$out_prefix"
+      run_python scripts/measure_command.py \
+        --tool plink-bfile \
+        --dataset-family "$family" \
+        --dataset-name "$dataset_name" \
+        --sample-count "$sample_count" \
+        --variant-count "$variant_count" \
+        --csv "$RESULTS_CSV" \
+        --run-dir "$run_dir" \
+        --shell-command "$shell_cmd" || true
+    fi
   fi
 
   if [[ "$RUN_PLYNK_LIN" -eq 1 ]]; then
