@@ -1,99 +1,226 @@
 # plynk-lin: A Minimal, Extensible Drop-in Subset of `plink --linear` GWAS
-This is solo project for CSE 284. This repo is as of now still work in progress.
 
----
+`plynk-lin` is a Python command-line tool for a narrow but useful subset of the
+PLINK 1.9 linear-regression workflow. The goal is to reproduce the core behavior
+of `plink --linear` for the PS3/CSE 284 evaluation setup while keeping the code
+modular and easy to extend.
 
-## Method to Implement
-The goal is to implement a minimal but expandable Python command-line tool that reproduces the core functionality of **PLINK 1.9's linear-regression GWAS** (`plink --linear`). 
+Supported CLI surface:
+- `--linear`
+- `--vcf`
+- `--pheno`
+- `--maf`
+- `--allow-no-sex`
+- `--out`
 
-The project aims to create a drop-in compatible CLI that matches PLINK behavior for a restricted subset of flags:
-* `--linear`
-* `--vcf` (matching PS3 workflow, diploid autosomal GT with multiallelic records reduced to the tested ALT allele for PLINK compatibility)
-* `--pheno`, `--maf`, `--allow-no-sex`
-* `--out` (output prefix for PLINK-like `.assoc.linear` table)
+Current implementation includes:
+- argument/config parsing
+- VCF and phenotype parsing
+- sample alignment with listwise deletion
+- variant QC with optional MAF filtering
+- per-variant additive linear regression
+- PLINK-like `.assoc.linear` output writing
+- smoke scripts and benchmark helpers
 
-### Technical Focus
-1.  **Correctness:** Accurately reproduce the OLS regression for GWAS.
-2.  **Extensibility:** Implement the tool using separate modules for:
-    * [Arg/config parsing](design_docs/00_arg_config_parsing.md)
-    * [IO](design_docs/01_io.md)
-    * [Sample/variant alignment](design_docs/02_sample_variant_alignment.md)
-    * [QC/filters](design_docs/03_qc_filters.md)
-    * [Association testing](design_docs/04_association_testing.md)
-    * [Output writing](design_docs/05_output_writing.md)
+## Project Structure
 
----
+Core modules:
+- [Arg/config parsing](design_docs/00_arg_config_parsing.md)
+- [IO](design_docs/01_io.md)
+- [Sample/variant alignment](design_docs/02_sample_variant_alignment.md)
+- [QC/filters](design_docs/03_qc_filters.md)
+- [Association testing](design_docs/04_association_testing.md)
+- [Output writing](design_docs/05_output_writing.md)
 
-## Install and Test
-Currently implemented:
-* Arg/config parsing
-* IO parsing (VCF/pheno)
-* Sample alignment and cohort listwise deletion
-* Variant QC with optional `--maf`
-* Per-variant linear association testing
-* PLINK-like `.assoc.linear` output writing
-* End-to-end CLI and smoke scripts
+## Dependencies
 
-### Dependencies
-`python 3.12`\
-`numpy, scipy, cyvcf2`\
-and also `pytest` for testing
+Required runtime:
+- Python 3.12
+- `numpy`
+- `scipy`
+- `cyvcf2`
 
-### Install
+Required for testing:
+- `pytest`
+
+Local course setup note:
+- A conda environment named `plynk` is expected to be available locally.
+- The package can be installed into that environment in editable mode.
+
+## Installation
+
 ```bash
 pip install -e . --no-build-isolation
 ```
 
+## Drop-in PLINK Usage
 
-### Run CLI
-There are sample VCF/pheno files in `tests/data`.
+This project is intended to mirror the PS3-style PLINK command:
+
 ```bash
-python -m plynk_lin --linear --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
+plink --vcf path_to_ref/ps3_gwas.vcf.gz \
+  --pheno path_to_ref/ps3_gwas.phen \
+  --linear \
+  --maf 0.05 \
+  --allow-no-sex \
+  --out ps3_gwas
 ```
 
-### Smoke check scripts
-```bash
-python scripts/smoke_io.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt
+The equivalent `plynk-lin` command is:
 
-python scripts/smoke_pipeline.py --vcf /path/to/input.vcf --pheno /path/to/pheno.txt --out /tmp/out --debug
+```bash
+python -m plynk_lin \
+  --linear \
+  --vcf path_to_ref/ps3_gwas.vcf.gz \
+  --pheno path_to_ref/ps3_gwas.phen \
+  --maf 0.05 \
+  --allow-no-sex \
+  --out ps3_gwas
 ```
 
-### Tests
-Run all tests:
+Example using the small test fixtures in this repo:
+
+```bash
+python -m plynk_lin \
+  --linear \
+  --vcf tests/data/pipeline.vcf \
+  --pheno tests/data/pheno_complete.txt \
+  --out tmp/example_run
+```
+
+Output:
+- `tmp/example_run.assoc.linear`
+
+Optional debugging:
+- add `--debug` for a pipeline summary
+
+## Smoke Checks
+
+Quick parsing check:
+
+```bash
+python scripts/smoke_io.py \
+  --vcf tests/data/pipeline.vcf \
+  --pheno tests/data/pheno_complete.txt
+```
+
+Quick end-to-end pipeline check:
+
+```bash
+python scripts/smoke_pipeline.py \
+  --vcf tests/data/pipeline.vcf \
+  --pheno tests/data/pheno_complete.txt \
+  --out tmp/smoke_pipeline \
+  --debug
+```
+
+## Testing With Pytest
+
+Run the full local test suite:
+
 ```bash
 python -m pytest -q
 ```
 
-Run a specific test module:
+Run an individual module test file:
+
 ```bash
+python -m pytest -q tests/test_arg_config.py
 python -m pytest -q tests/test_io_vcf.py
+python -m pytest -q tests/test_alignment.py
+python -m pytest -q tests/test_qc_filters.py
+python -m pytest -q tests/test_association.py
+python -m pytest -q tests/test_output_writer.py
 ```
 
-To test the package end-to-end with PS3 datasets:
-* Create a new directory `ref_data` in the project root
-* Copy the PS3 data `ps3_gwas.vcf.gz` and `ps3_gwas.phen` there, and 
-* Create a `ref_out` folder inside `ref_data` and put in the reference output `ps3_gwas.assoc.linear`
-* Run:
-``` bash
+Run an end-to-end test only:
+
+```bash
+python -m pytest -q tests/test_end_to_end.py
+```
+
+Run the benchmark helper tests only:
+
+```bash
+python -m pytest -q tests/test_make_perf_subsets.py
+python -m pytest -q tests/test_benchmark_harness.py
+```
+
+## PS3 Reference Regression Test
+
+For the full PS3 comparison against a PLINK reference output:
+
+1. Put `ps3_gwas.vcf.gz` in `ref_data/`
+2. Put `ps3_gwas.phen` in `ref_data/`
+3. Put the PLINK reference output at `ref_data/ref_out/ps3_gwas.assoc.linear`
+4. Run:
+
+```bash
 PLYNK_RUN_REFERENCE=1 python -m pytest -q tests/test_end_to_end.py -k reference_dataset_regression
 ```
 
----
+## Benchmark Subset Generation
 
-## Evaluation Strategy
-1.  **Correctness and Behavior Alignment:** 
-    * Compare results against PLINK using the same PS3-like dataset.
-    * Validate per-SNP Beta/t-stat/P agreement (correlation and max absolute differences).
-    * Compare top hits (top-K overlap and genome-wide significant hits).
-2.  **Data Integrity & Edge-case Alignment:**
-    * Verify ID-based alignment by shuffling phenotype file order.
-    * Confirm listwise deletion and matching NMISS/df conventions by injecting missing values.
-3.  **Performance Benchmark:**
-    * Measure runtime and peak memory usage on varying datasets.
+The benchmark workflow uses deterministic nested subsets generated from the PS3
+VCF/pheno pair.
 
----
+Default evaluation families:
+- sample scaling: `N = 25, 50, 100, 207` with full `M = 917,845`
+- variant scaling: `M = 1,000, 10,000, 100,000, 917,845` with full `N = 207`
 
-## Dataset
-* Primarily the subset from the **1000 Genome dataset** used in PS3.
-* Additional subsets to be derived from the complete 1000 Genome dataset available on DataHub.
-* Phenotype data to be simulated as 1000 Genome dataset does not contain them.
+Generate benchmark subsets:
+
+```bash
+python scripts/make_perf_subsets.py \
+  --vcf ref_data/ps3_gwas.vcf.gz \
+  --pheno ref_data/ps3_gwas.phen \
+  --out benchmark
+```
+
+This writes:
+- nested subset directories under `benchmark/sample_scaling/` and `benchmark/variant_scaling/`
+- a manifest at `benchmark/manifest.json`
+
+## Running Benchmarks
+
+Measure `plynk-lin` on the generated subsets:
+
+```bash
+bash scripts/run_benchmarks.sh --benchmark-dir benchmark --plynk-lin
+```
+
+Measure PLINK on VCF input:
+
+```bash
+bash scripts/run_benchmarks.sh --benchmark-dir benchmark --plink
+```
+
+Optional: convert benchmark subsets to PLINK bed/bim/fam first:
+
+```bash
+bash scripts/convert_benchmark_to_bfile.sh --benchmark-dir benchmark
+```
+
+Then benchmark PLINK on binary input:
+
+```bash
+bash scripts/run_benchmarks.sh --benchmark-dir benchmark --plink-bfile
+```
+
+Benchmark outputs:
+- `benchmark/results.csv`
+- `benchmark/runs/.../stdout.log`
+- `benchmark/runs/.../stderr.log`
+
+## Evaluation Goals
+
+- correctness against the PS3 PLINK reference output
+- deterministic behavior on sample/variant subset families
+- runtime and peak RAM measurement on generated benchmark inputs
+
+## Dataset Notes
+
+- The main reference dataset is the PS3 subset derived from 1000 Genomes.
+- The PS3 phenotype file is simulated.
+- Performance evaluation is based on deterministic subsets of the PS3 VCF/pheno pair.
+- If larger 1000 Genomes subsets are added later, the same benchmark scheme can be reused.
