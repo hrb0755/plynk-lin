@@ -211,3 +211,6 @@ Benchmark outputs:
 - `benchmark/runs/(run-type)/stdout.log`
 - `benchmark/runs/(run-type)/stderr.log`
 
+### Benchmark Results
+
+Benchmark results and their visualization used for presentation and report could be found in `benchmark` folder of the repo
