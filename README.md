@@ -22,6 +22,21 @@ Current implementation includes:
 - PLINK-like `.assoc.linear` output writing
 - smoke scripts and benchmark helpers
 
+The presentation slides for the project can be found on [Google Docs](https://docs.google.com/presentation/d/1pEZaKuNE84LdVk36zvZgyPYlGT96Uvoj2YKKw-D7Tgc/edit?usp=sharing)
+
+## Evaluation Goals
+
+- correctness against the PS3 PLINK reference output; mostly on row number, index and numerical agreement
+- deterministic behavior on sample/variant subset families
+- runtime and peak RAM measurement on generated benchmark inputs
+
+## Dataset Notes
+
+- The main reference dataset is the PS3 subset derived from 1000 Genomes.
+- The PS3 phenotype file is simulated.
+- Performance evaluation is based on deterministic subsets of the PS3 VCF/pheno pair.
+- If larger 1000 Genomes subsets are added later, the same benchmark scheme can be reused.
+
 ## Project Structure
 
 Core modules:
@@ -34,24 +49,19 @@ Core modules:
 
 ## Dependencies
 
-Required runtime:
-- Python 3.12
-- `numpy`
-- `scipy`
-- `cyvcf2`
+Python 3.12\
+`numpy`, `scipy` and `cyvcf2`
 
-Required for testing:
+Additional requirement for testing:
 - `pytest`
 
-Local course setup note:
-- A conda environment named `plynk` is expected to be available locally.
-- The package can be installed into that environment in editable mode.
 
 ## Installation
 
 ```bash
-pip install -e . --no-build-isolation
+pip install -e . 
 ```
+add `--no-build-isolation` to the command if necessary.
 
 ## Drop-in PLINK Usage
 
@@ -66,7 +76,7 @@ plink --vcf path_to_ref/ps3_gwas.vcf.gz \
   --out ps3_gwas
 ```
 
-The equivalent `plynk-lin` command is:
+The equivalent `plynk-lin` command is just replacing `plink` with `python -m plynk_lin`:
 
 ```bash
 python -m plynk_lin \
@@ -83,8 +93,8 @@ Example using the small test fixtures in this repo:
 ```bash
 python -m plynk_lin \
   --linear \
-  --vcf tests/data/pipeline.vcf \
-  --pheno tests/data/pheno_complete.txt \
+  --vcf tests/data/1.vcf \
+  --pheno tests/data/1.phen \
   --out tmp/example_run
 ```
 
@@ -94,7 +104,10 @@ Output:
 Optional debugging:
 - add `--debug` for a pipeline summary
 
-## Smoke Checks
+
+## Testing
+
+### Smoke Checks
 
 Quick parsing check:
 
@@ -114,7 +127,7 @@ python scripts/smoke_pipeline.py \
   --debug
 ```
 
-## Testing With Pytest
+### Testing With Pytest
 
 Run the full local test suite:
 
@@ -146,11 +159,11 @@ python -m pytest -q tests/test_make_perf_subsets.py
 python -m pytest -q tests/test_benchmark_harness.py
 ```
 
-## PS3 Reference Regression Test
+### PS3 Reference Regression Test
 
 For the full PS3 comparison against a PLINK reference output:
 
-1. Put `ps3_gwas.vcf.gz` in `ref_data/`
+1. Put `ps3_gwas.vcf.gz` in `ref_data/` (directory is hard-coded in the testing script)
 2. Put `ps3_gwas.phen` in `ref_data/`
 3. Put the PLINK reference output at `ref_data/ref_out/ps3_gwas.assoc.linear`
 4. Run:
@@ -159,7 +172,11 @@ For the full PS3 comparison against a PLINK reference output:
 PLYNK_RUN_REFERENCE=1 python -m pytest -q tests/test_end_to_end.py -k reference_dataset_regression
 ```
 
-## Benchmark Subset Generation
+----
+
+## Benchmarking 
+
+### Benchmark Subset Generation
 
 The benchmark workflow uses deterministic nested subsets generated from the PS3
 VCF/pheno pair.
@@ -181,7 +198,7 @@ This writes:
 - nested subset directories under `benchmark/sample_scaling/` and `benchmark/variant_scaling/`
 - a manifest at `benchmark/manifest.json`
 
-## Running Benchmarks
+### Running Benchmarks
 
 Measure `plynk-lin` on the generated subsets:
 
@@ -209,18 +226,6 @@ bash scripts/run_benchmarks.sh --benchmark-dir benchmark --plink-bfile
 
 Benchmark outputs:
 - `benchmark/results.csv`
-- `benchmark/runs/.../stdout.log`
-- `benchmark/runs/.../stderr.log`
+- `benchmark/runs/(run-type)/stdout.log`
+- `benchmark/runs/(run-type)/stderr.log`
 
-## Evaluation Goals
-
-- correctness against the PS3 PLINK reference output
-- deterministic behavior on sample/variant subset families
-- runtime and peak RAM measurement on generated benchmark inputs
-
-## Dataset Notes
-
-- The main reference dataset is the PS3 subset derived from 1000 Genomes.
-- The PS3 phenotype file is simulated.
-- Performance evaluation is based on deterministic subsets of the PS3 VCF/pheno pair.
-- If larger 1000 Genomes subsets are added later, the same benchmark scheme can be reused.
