@@ -88,13 +88,13 @@ python -m plynk_lin \
   --out ps3_gwas
 ```
 
-Example using the small test fixtures in this repo:
+Example using the small test data fixtures (in `tests/data`) in this repo:
 
 ```bash
 python -m plynk_lin \
   --linear \
-  --vcf tests/data/1.vcf \
-  --pheno tests/data/1.phen \
+  --vcf tests/data/pipeline.vcf \
+  --pheno tests/data/pheno_complete.txt \
   --out tmp/example_run
 ```
 
@@ -109,7 +109,7 @@ Optional debugging:
 
 ### Smoke Checks
 
-Quick parsing check:
+Quick parsing check using included small test data:
 
 ```bash
 python scripts/smoke_io.py \
