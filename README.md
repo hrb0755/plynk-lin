@@ -138,25 +138,7 @@ python -m pytest -q
 Run an individual module test file:
 
 ```bash
-python -m pytest -q tests/test_arg_config.py
-python -m pytest -q tests/test_io_vcf.py
-python -m pytest -q tests/test_alignment.py
-python -m pytest -q tests/test_qc_filters.py
-python -m pytest -q tests/test_association.py
-python -m pytest -q tests/test_output_writer.py
-```
-
-Run an end-to-end test only:
-
-```bash
-python -m pytest -q tests/test_end_to_end.py
-```
-
-Run the benchmark helper tests only:
-
-```bash
-python -m pytest -q tests/test_make_perf_subsets.py
-python -m pytest -q tests/test_benchmark_harness.py
+python -m pytest -q tests/some_individual_test.py
 ```
 
 ### PS3 Reference Regression Test
